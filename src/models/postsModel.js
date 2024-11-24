@@ -2,95 +2,68 @@ import "dotenv/config";
 import { ObjectId } from "mongodb";
 import conectarAoBanco from "../config/dbConfig.js";
 
-// Conecta ao banco de dados usando a string de conexão fornecida pela variável de ambiente
+// Conecta ao banco de dados MongoDB usando a string de conexão fornecida pela variável de ambiente
 const conexao = await conectarAoBanco(process.env.CONNECTION_STRING);
 
-// originalmente só havia uma função no documento, 
-// por isso ela podia ser do tipo default, a solução do momento 
-// foi remover o tipo default das funções
 
 // Função assíncrona para obter todos os posts do banco de dados
 export async function getTodosPosts() {
     try {
-         // Seleciona o banco de dados e a coleção de posts
-        const db = conexao.db("imersao-instabytes");;
+        // Conecta ao banco de dados e seleciona a coleção de posts.
+        const db = conexao.db("imersao-instabytes");
         const colecao = db.collection("posts");
 
         // Retorna todos os documentos da coleção como um array
         return colecao.find().toArray();
     }
     catch (error) {
+        // Captura qualquer erro que possa ocorrer durante a operação.
         console.error("Erro ao obter posts:", error);
+        // Lança um novo erro para propagar o erro para o chamador da função.
         throw new Error("Não foi possível obter os posts.");
     }   
 };
 
-export async function alterarPost(id, novoConteudo) {
+// Função assíncrona para criar um post no banco de dados
+export async function criarPost(novoPost) {
     try {
-        const db = conexao.db("imersao-instabytes");;
-        const colecao = db.collection("posts");
-        const objectId = new ObjectId(id); // o jeito correto de fazer está na função abaixo
-        const resultado = await colecao.updateOne(
-            { _id: objectId }, // Filtro para encontrar o post
-            { $set: novoConteudo }
-        );
-        return resultado;
-    } catch (error) {
-        console.error(error);
-        throw new Error("Erro ao atualizar o post");
-    }    
-}
-
-
-export async function alterarCampoDescricao(id, novaDescricao) {
-    try {
+        // Conecta ao banco de dados e seleciona a coleção de posts.
         const db = conexao.db("imersao-instabytes");
         const colecao = db.collection("posts");
-        //const objectId = new ObjectId(id);
-        const objectId = new ObjectId.createFromHexString(id);
-        const resultado = await colecao.updateOne(
-            //{ _id: objectId }, // Filtro para encontrar o post
-            { _id: objectId }, // Filtro para encontrar o post
-            { $set: { descricao: novaDescricao } }
-        );
-        return resultado;
+        
+        // Insere um novo documento na coleção de posts.
+        // O método `insertOne()` insere um único documento e 
+        // retorna um objeto com informações sobre o documento inserido, incluindo o `_id` gerado automaticamente.
+        return colecao.insertOne(novoPost);
     } catch (error) {
+        // Captura qualquer erro que possa ocorrer durante a operação de inserção.
         console.error(error);
-        throw new Error("Erro ao atualizar a descrição");
-    }    
-}
-
-
-export async function criarPost(novoPost) {    
-     const db = conexao.db("imersao-instabytes");
-     const colecao = db.collection("posts");
- 
-     return colecao.insertOne(novoPost);
-}
-
-
-export async function atualizarPost(id, novoPost) {    
-    const db = conexao.db("imersao-instabytes");
-    const colecao = db.collection("posts");
-    const objID = ObjectId.createFromHexString(id);
-
-    return colecao.updateOne(
-        { _id: new ObjectId(objID) },
-        { $set: novoPost }
-    );
-}
-
-// Função assíncrona para obter todos os usuários do banco de dados
-export async function getAllUsers() {
-    try {
-        // Seleciona o banco de dados e a coleção de usuários
-        const db = conexao.db("imersao-instabytes");
-        const colecao = db.collection("users");
-
-        // Retorna todos os documentos da coleção como um array
-        return await colecao.find().toArray();
-    } catch (error) {
-        console.error("Erro ao obter usuários:", error);
-        throw new Error("Não foi possível obter os usuários.");
+        // Lança um novo erro para propagar o erro para o chamador da função.
+        throw new Error("Erro ao criar post.");
     }
+}
+
+// Função assíncrona para atualizar um post no banco de dados
+export async function atualizarPost(id, novoPost) {
+    try {
+        // Conecta ao banco de dados e seleciona a coleção de posts.
+        const db = conexao.db("imersao-instabytes");
+        const colecao = db.collection("posts");
+
+        // Converte o ID do post para um objeto ObjectId exigido pelo MongoDB para identificar um documento.
+        const objID = ObjectId.createFromHexString(id);
+
+        // Atualiza um documento na coleção de posts.
+        // O método `updateOne()` localiza o documento através do _id: e 
+        // aplica as modificações especificadas pelo parâmetro novoPost.        
+        return colecao.updateOne(
+            { _id: new ObjectId(objID) },
+            { $set: novoPost }
+        );    
+    } catch (error) {
+        // Captura qualquer erro que possa ocorrer durante a operação de inserção.
+        console.error(error);
+        // Lança um novo erro para propagar o erro para o chamador da função.
+        throw new Error("Erro ao atualizar o post.");
+    }    
 }
